@@ -27,37 +27,45 @@ namespace eval ::ZCT {
     array set pkg {
         "version"		"0.0.1"
         "name"			"package ZCT"
+        "auteur"		"ZarTeK-Creole"
     }
-
 }
-proc ::ZCT::pkg:showdl { PKG_NAME } {
-    switch ${PKG_NAME} {
-        case {}
+
+namespace eval ::ZCT::pkg {
+    namespace export *
+}
+proc ::ZCT::pkg { cmd args } {
+    ::ZCT::pkg::${cmd} {*}${args}
+}
+proc ::ZCT::pkg::load { PKG_NAME {PKG_VERSION ""} {SCRIPT_NAME ""} {MISSING_MODE "die"} } {
+    if { ${SCRIPT_NAME} == "" }  {
+        set ERR_PREFIX "\[Erreur\] Le script nécessite du package ${PKG_NAME}"
+        set OK_PREFIX "\[OK\] Le script à chargé le package ${PKG_NAME}"
+    } else {
+        set ERR_PREFIX "\[Erreur\] Le script ${SCRIPT_NAME} nécessite du package ${PKG_NAME}"
+        set OK_PREFIX "\[OK\] Le script ${SCRIPT_NAME} à chargé le package ${PKG_NAME}"
+    }
+    if { ${PKG_VERSION} == "" } {
+        putlog "package require ${PKG_VERSION} 2"
+        if { [catch { set PKG_VERSION [package require ${PKG_NAME}]}] } {
+            ${MISSING_MODE} "${ERR_PREFIX} pour fonctionner. [::ZCT::pkg::How_Download ${PKG_NAME}]"
+        }
+    } else {
+        if { [catch { set PKG_VERSION [package require ${PKG_NAME} ${PKG_VERSION}]}] } {
+            ${MISSING_MODE} "${ERR_PREFIX} version ${PKG_VERSION} ou supérieur pour fonctionner. [::ZCT::pkg::How_Download ${PKG_NAME}]"
+        }
+    }
+    putlog "${OK_PREFIX} avec la version ${PKG_VERSION} avec succès"
+}
+proc ::ZCT::pkg::How_Download { PKG_NAME } {
+    switch -nocase ${PKG_NAME} {
+        Logger { return "Il fait partie de la game de tcllib.\n Téléchargement sur https://www.tcl.tk/software/tcllib/"}
+        Tcl { return "Télécharger la derniere version sur https://www.tcl.tk/software/tcltk/"}
         default     {
             return
         }
     }
 }
-proc ::ZCT::pkg { PKG_NAME {PKG_VERSION ""} {SCRIPT_NAME ""} {MISSING_MODE "die"} } {
-    if { ${SCRIPT_NAME} == "" }  {
-        set ERR_PREFIX "\[Erreur\] Le script nécessite du package ${PKG_NAME}"
-        set OK_PREFIX "\[OK\] Le script à chargé le package ${PKG_NAME} avec succès"
-    } else {
-        set ERR_PREFIX "\[Erreur\] Le script ${SCRIPT_NAME} nécessite du package ${PKG_NAME}"
-        set OK_PREFIX "\[OK\] Le script ${SCRIPT_NAME} à chargé le package ${PKG_NAME} avec succès"
-    }
-    if { ${PKG_VERSION} == "" } {
-        if { [catch { set PKG_VERSION [package require ${PKG_NAME}]}] } {
-            ${MISSING_MODE} "${ERR_PREFIX} pour fonctionner. [::ZCT::pkg:showdl ${PKG_NAME}]"
-        } else {
-            putlog "${OK_PREFIX} version ${PKG_VERSION} avec succès"
-        }
-    } else {
-        if { [catch { set PKG_VERSION [package require ${PKG_NAME} ${PKG_VERSION}]}] } {
-            ${MISSING_MODE} "${ERR_PREFIX} version ${PKG_VERSION} ou supérieur pour fonctionner. [::ZCT::pkg:showdl ${PKG_NAME}]"
-        } else {
-            putlog "${OK_PREFIX} version ${PKG_VERSION} avec succès"
-        }
-    }
-}
+
 package provide ZCT ${::ZCT::pkg(version)}
+putlog "Package ZCT version ${::ZCT::pkg(version)} par ${::ZCT::pkg(auteur)} chargé."

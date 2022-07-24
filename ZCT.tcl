@@ -29,6 +29,13 @@ namespace eval ::ZCT {
         "name"			"package ZCT"
         "auteur"		"ZarTeK-Creole"
     }
+    if { [info commands ::putlog] == "" } {
+        set PKG(eggdrop) 0
+        set PPL "puts"
+    } else {
+        set PKG(eggdrop) 1
+        set PPL "putlog"
+    }
 }
 
 namespace eval ::ZCT::pkg {
@@ -51,7 +58,7 @@ proc ::ZCT::pkg::load { PKG_NAME {PKG_VERSION ""} {SCRIPT_NAME ""} {MISSING_MODE
             ${MISSING_MODE} "${ERR_PREFIX} version ${PKG_VERSION} ou supérieur pour fonctionner. [::ZCT::pkg::How_Download ${PKG_NAME}]"
         }
     }
-    putlog "${OK_PREFIX} avec la version ${PKG_VERSION} avec succès"
+    ${::ZCT::PPL} "${OK_PREFIX} avec la version ${PKG_VERSION} avec succès"
 }
 # Si un package est absent lors du "pkg load" nous retournons une aide pour l'installer le package manquant
 proc ::ZCT::pkg::How_Download { PKG_NAME } {
@@ -122,32 +129,34 @@ proc ::ZCT::calledby {} {
         }
     }
 }
-# Plutlog ameliorer, avec des niveau (couleurs differentes) et type de text
-proc ::ZCT::putlog { text {level_name ""} {text_name ""} } {
-    variable ::ZCT::SCRIPT
-    set UP_LEVEL_NAME [::ZCT::calledby]
-    if { ${text_name} == "" } {
-        if { ${level_name} != "" } {
-            set text_name " - ${level_name}"
+# Putlog amelioreé, avec des niveau (couleurs differentes) et type de text
+if { ${::ZCT::PKG(eggdrop)} } {
+    proc ::ZCT::putlog { text {level_name ""} {text_name ""} } {
+        variable ::ZCT::SCRIPT
+        set UP_LEVEL_NAME [::ZCT::calledby]
+        if { ${text_name} == "" } {
+            if { ${level_name} != "" } {
+                set text_name " - ${level_name}"
+            } else {
+                set text_name ""
+            }
         } else {
-            set text_name ""
+            set text_name " - ${text_name}"
         }
-    } else {
-        set text_name " - ${text_name}"
+        switch -nocase ${level_name} {
+            "error"		{ puts "[pcolor_red]\[${UP_LEVEL_NAME}${text_name}\][pcolors_end] [pcolor_blue]${text}[pcolors_end]" }
+            "warning"	{ puts "[pcolor_yellow]\[${UP_LEVEL_NAME}${text_name}\][pcolors_end] [pcolor_blue]${text}[pcolors_end]" }
+            "notice"	{ puts "[pcolor_cyan]\[${UP_LEVEL_NAME}${text_name}\][pcolors_end] [pcolor_blue]${text}[pcolors_end]" }
+            "debug"		{ puts "[pcolor_magenta]\[${UP_LEVEL_NAME}${text_name}\][pcolors_end] [pcolor_blue]${text}[pcolors_end]" }
+            "info"		{ puts "[pcolor_blue]\[${UP_LEVEL_NAME}${text_name}\][pcolors_end] [pcolor_blue]${text}[pcolors_end]" }
+            "success"	{ puts "[pcolor_green]\[${UP_LEVEL_NAME}${text_name}\][pcolors_end] [pcolor_blue]${text}[pcolors_end]" }
+            default		{ puts "\[${UP_LEVEL_NAME}${text_name}\] [pcolor_blue]${text}[pcolors_end]" }
+        }
     }
-    switch -nocase ${level_name} {
-        "error"		{ puts "[pcolor_red]\[${UP_LEVEL_NAME}${text_name}\][pcolors_end] [pcolor_blue]${text}[pcolors_end]" }
-        "warning"	{ puts "[pcolor_yellow]\[${UP_LEVEL_NAME}${text_name}\][pcolors_end] [pcolor_blue]${text}[pcolors_end]" }
-        "notice"	{ puts "[pcolor_cyan]\[${UP_LEVEL_NAME}${text_name}\][pcolors_end] [pcolor_blue]${text}[pcolors_end]" }
-        "debug"		{ puts "[pcolor_magenta]\[${UP_LEVEL_NAME}${text_name}\][pcolors_end] [pcolor_blue]${text}[pcolors_end]" }
-        "info"		{ puts "[pcolor_blue]\[${UP_LEVEL_NAME}${text_name}\][pcolors_end] [pcolor_blue]${text}[pcolors_end]" }
-        "success"	{ puts "[pcolor_green]\[${UP_LEVEL_NAME}${text_name}\][pcolors_end] [pcolor_blue]${text}[pcolors_end]" }
-        default		{ puts "\[${UP_LEVEL_NAME}${text_name}\] [pcolor_blue]${text}[pcolors_end]" }
+    if { [info commands ::putlog.old] == "" } {
+        rename ::putlog ::putlog.old;
+        interp alias {} putlog {} ::ZCT::putlog
     }
-}
-if { [info commands ::putlog.old] == "" } {
-    rename ::putlog ::putlog.old;
-    interp alias {} putlog {} ::ZCT::putlog
 }
 namespace eval ::ZCT::TXT {
     namespace export *
@@ -236,4 +245,4 @@ proc ::ZCT::create_sub_procs { namespace } {
 ::ZCT::create_sub_procs ::ZCT
 
 package provide ZCT ${::ZCT::PKG(version)}
-putlog "Package ZCT version ${::ZCT::PKG(version)} par ${::ZCT::PKG(auteur)} chargé."
+${::ZCT::PPL} "Package ZCT version ${::ZCT::PKG(version)} par ${::ZCT::PKG(auteur)} chargé."

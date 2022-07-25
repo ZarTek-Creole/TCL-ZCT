@@ -1,9 +1,9 @@
 # TCL-ZCT
 ZCT - ZarTeK-Creole Tools
 # Introduction
-ZCT est un ensemble d'outils TCL concu pour fonctionner avec les TCL de ZarTeK-Creole Tools
+ZCT est un ensemble d'outils TCL conçu pour fonctionner avec les TCL de ZarTeK-Creole Tools
 
-# Télécharment
+# Téléchargement
 ```
 git clone https://github.com/ZarTek-Creole/TCL-ZCT.git
 ```
@@ -11,7 +11,7 @@ git clone https://github.com/ZarTek-Creole/TCL-ZCT.git
 # Installation
 > ./Install 
 
-# Tester l'Installation
+# Tester l'installation
 ```
 > tclsh
 % package require ZCT
@@ -25,4 +25,4 @@ C'est ok
 can't find package ZCT
 %
 ```
-C'est pas ok
+C'est pas ok .... retour au téléchargement ....

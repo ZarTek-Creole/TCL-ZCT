@@ -25,9 +25,11 @@ namespace eval ::ZCT {
     namespace export *
     variable PKG
     array set PKG {
-        "version"		"0.0.4"
-        "name"			"package ZCT"
-        "auteur"		"ZarTeK-Creole"
+        "version_string"	"0.0.4"
+        "version_number"	"0000400"
+        "version_patch"		"alpha"
+        "name"			    "package ZCT"
+        "auteur"		    "ZarTeK-Creole"
     }
     if { [info commands ::putlog] == "" } {
         set PKG(eggdrop) 0

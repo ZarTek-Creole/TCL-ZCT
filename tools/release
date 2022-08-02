@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 #!/bin/bash
-=======
-#!/bin/bash -x
->>>>>>> 65eb570a30a04ec11ae90441692447de9ab86957
 
 # Variable
 ################################################################################
@@ -72,20 +68,13 @@ UpdateDocs() {
 	cd "${DIR_TOOLS}" || exit
     [ ! -d "tcldoc" ] && git clone https://github.com/ZarTek-Creole/tcldoc.git tcldoc > /dev/null
 	cd tcldoc || exit
-<<<<<<< HEAD
 	[ -d ".git" ] && rm -rf .git
-=======
->>>>>>> 65eb570a30a04ec11ae90441692447de9ab86957
 
 	# remove old data before
 	rm -rf "${DIR_ROOT}"/docs
     tclsh tcldoc.tcl --hide-paths --title "${ScriptName}" -f "${DIR_ROOT}"/docs "${DIR_ROOT}"/*.tcl
-<<<<<<< HEAD
 	git add "${DIR_ROOT}"/docs  > /dev/null
     git commit -m "Generate docs with ${VERS_NEW} version" > /dev/null
-=======
-    git commit -am "Generate docs with ${VERS_NEW} version" > /dev/null
->>>>>>> 65eb570a30a04ec11ae90441692447de9ab86957
 }
 
 UpdateChangeLog() {
@@ -100,12 +89,8 @@ UpdateChangeLog() {
     git log $(git describe --tags --abbrev=0)..HEAD --no-merges --oneline --pretty=format:"<tr>%n      <td>%cs</td>%n      <td>%h</td>%n      <td><a href="https://github.com/ZarTek-Creole/TCL-ClaraServ/commit/%h">%s</a></td>%n      <td>%an</td>%n    </tr>" >> ChangeLog.html
     echo "  </table></html>" >> ChangeLog.html
     echo "ChangeLog créé"
-<<<<<<< HEAD
 	git add ChangeLog.html
 	git commit -m "Generate Update ChangeLog with ${VERS_NEW} version" > /dev/null
-=======
-	git commit -am "Generate Update ChangeLog with ${VERS_NEW} version" > /dev/null
->>>>>>> 65eb570a30a04ec11ae90441692447de9ab86957
 }
 CheckBinaryExist() {
 	if test "${git}" = ""; then
@@ -221,11 +206,7 @@ git add . > /dev/null
 
 UpdateDocs
 UpdateChangeLog
-<<<<<<< HEAD
 git commit -m "v${VERS_NEW}: $*"
-=======
-git commit -ma "v${VERS_NEW}: $*"
->>>>>>> 65eb570a30a04ec11ae90441692447de9ab86957
 if [ -n "$patch" ]
 then
 	# Commit the release and tag it.

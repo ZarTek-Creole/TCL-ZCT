@@ -25,7 +25,7 @@ namespace eval ::ZCT {
     namespace export *
     variable PKG
     array set PKG {
-        "version"		"0.0.7"
+        "version"		"0.0.8"
         "name"			"package ZCT"
         "auteur"		"ZarTeK-Creole"
     }

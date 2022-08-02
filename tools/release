@@ -204,9 +204,10 @@ GitConfig
 # git spull > /dev/null
 git add . > /dev/null
 
+
+git commit -m "v${VERS_NEW}: $*"
 UpdateDocs
 UpdateChangeLog
-git commit -m "v${VERS_NEW}: $*"
 if [ -n "$patch" ]
 then
 	# Commit the release and tag it.
@@ -227,5 +228,4 @@ else
 	git push --tags -f
 	git checkout develop
 fi
-
 cd "${DIR_CURRENT}" || exit

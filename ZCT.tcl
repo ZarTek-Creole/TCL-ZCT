@@ -27,7 +27,7 @@ namespace eval ::ZCT {
     array set PKG {
         "version"		"0.0.8"
         "name"			"package ZCT"
-        "auteur"		"ZarTeK-Creole"
+        "auteur"		"ZarTeK-Creole @ https://github.com/ZarTek-Creole"
     }
     if { [info commands ::putlog] == "" } {
         set PKG(eggdrop) 0
@@ -63,9 +63,10 @@ proc ::ZCT::pkg::load { PKG_NAME {PKG_VERSION ""} {SCRIPT_NAME ""} {MISSING_MODE
 # Si un package est absent lors du "pkg load" nous retournons une aide pour l'installer le package manquant
 proc ::ZCT::pkg::How_Download { PKG_NAME } {
     switch -nocase ${PKG_NAME} {
-        Logger      { return "Il fait partie de la game de tcllib.\n Téléchargement sur https://www.tcl.tk/software/tcllib/"}
-        Tcl         { return "Télécharger la derniere version sur https://www.tcl.tk/software/tcltk/"}
-        default     { return "Aucune information sur ${PKG_NAME}, vous devez chercher sur internet"  }
+        Logger      	{ return "Il fait partie de la game de tcllib.\n Téléchargement sur https://www.tcl.tk/software/tcllib/" }
+        IRCServices  	{ return "Télécharger la derniere version sur https://github.com/ZarTek-Creole/TCL-PKG-IRCServices"}
+        Tcl         	{ return "Télécharger la derniere version sur https://www.tcl.tk/software/tcltk/" }
+        default     	{ return "Aucune information sur ${PKG_NAME}, vous devez chercher sur internet"   }
     }
 }
 # Verifications de presence de variables.
@@ -195,6 +196,24 @@ proc ::ZCT::TXT::visuals::espace { text length } {
 # </u>  : Enlever le style Underline/souligner
 # <i>   : Ajouter le style Italic/Italique
 # <s>   : Enlever les styles precedent
+##
+# Black       = 00
+# White       = 01
+# Dark Blue   = 02
+# Green       = 03
+# Red         = 04
+# Brown       = 05
+# Purple      = 06
+# Orange      = 07
+# Yellow      = 08
+# Light Green = 09
+# DarkCyan    = 10
+# LightCyan   = 11
+# LightBlue   = 12
+# Pink        = 13
+# Dark Grey   = 14
+# Light Grey  = 15
+##
 proc ::ZCT::TXT::visuals::apply { data } {
     regsub -all -nocase {<c([0-9]{0,2}(,[0-9]{0,2})?)?>|</c([0-9]{0,2}(,[0-9]{0,2})?)?>} ${data} "\003\\1" data
     regsub -all -nocase {<b>|</b>} ${data} "\002" data

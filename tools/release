@@ -28,7 +28,7 @@ FILE_PATH="$(realpath -- "${DIR_ROOT}/${FILENAME_SCRIPT}")"
 # GetVERS_CURR Fichier.tcl
 
 GetVERS_CURR () {
-    string=$(grep '"version"' "${FILE_PATH}")
+    string=$(grep -i '"version"' "${FILE_PATH}")
     partern='\s+"version"\s+"([0-9]+)\.([0-9]+)\.([0-9]+)"'
     [[ ${string} =~ ${partern} ]]
     VERS_CURR="${BASH_REMATCH[1]}.${BASH_REMATCH[2]}.${BASH_REMATCH[3]}"
@@ -36,7 +36,7 @@ GetVERS_CURR () {
 }
 
 GetScriptName () {
-    string=$(grep '"name"' "${FILE_PATH}")
+    string=$(grep -i '"name"' "${FILE_PATH}")
     partern='\s+"name"\s+"([^"]])"'
     [[ ${string} =~ ${partern} ]]
     ScriptName="${BASH_REMATCH[1]}"
@@ -54,22 +54,22 @@ UpdateVersion() {
 }
 
 GitConfig() {
-    git config --global pull.ff false
-    git config --global alias.sdiff '!'"git diff && git submodule foreach 'git diff'"
-    git config --global alias.spush 'push --recurse-submodules=on-demand'
-    git config --global alias.supdate 'submodule update --remote --merge'
-    git config --global alias.spull '!git pull && git submodule sync --recursive && git submodule update --init --recursive'
+	git config advice.addIgnoredFile false
+    git config pull.ff false
+    git config alias.sdiff '!'"git diff && git submodule foreach 'git diff'"
+    git config alias.spush 'push --recurse-submodules=on-demand'
+    git config alias.supdate 'submodule update --remote --merge'
+    git config alias.spull '!git pull && git submodule sync --recursive && git submodule update --init --recursive'
 }
 
 UpdateDocs() {
+	cd "${DIR_TOOLS}" || exit
     # Generate docs
     echo "Generating docs (be patient)..."
     ### Check for dir, if not found create it using the mkdir ##
-	cd "${DIR_TOOLS}" || exit
     [ ! -d "tcldoc" ] && git clone https://github.com/ZarTek-Creole/tcldoc.git tcldoc > /dev/null
 	cd tcldoc || exit
 	[ -d ".git" ] && rm -rf .git
-
 	# remove old data before
 	rm -rf "${DIR_ROOT}"/docs
     tclsh tcldoc.tcl --hide-paths --title "${ScriptName}" -f "${DIR_ROOT}"/docs "${DIR_ROOT}"/*.tcl
@@ -78,6 +78,7 @@ UpdateDocs() {
 }
 
 UpdateChangeLog() {
+	cd ${DIR_ROOT}
    echo "<html>
   <table>
     <tr>

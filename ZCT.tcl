@@ -1,43 +1,54 @@
 #############################################################################
 #
-#	Auteur	:
-#		-> ZarTek (ZarTek.Creole@GMail.Com)
+#  Auteur  :
+#    -> ZarTek (ZarTek.Creole@GMail.Com)
 #
-#	Website	:
-#		-> github.com/ZarTek-Creole/TCL-ZCT
+#  Website  :
+#    -> github.com/ZarTek-Creole/TCL-ZCT
 #
-#	Support	:
-#		-> github.com/ZarTek-Creole/TCL-ZCT/issues
+#  Support  :
+#    -> github.com/ZarTek-Creole/TCL-ZCT/issues
 #
-#	Docs	:
-#		-> github.com/ZarTek-Creole/TCL-ZCT/wiki
+#  Docs  :
+#    -> github.com/ZarTek-Creole/TCL-ZCT/wiki
 #
 #   DONATE   :
 #       -> https://github.com/ZarTek-Creole/DONATE
 #
-#	LICENSE :
-#		-> Creative Commons Attribution 4.0 International
-#		-> github.com/ZarTek-Creole/TCL-ZCT/blob/main/LICENSE.txt
+#  LICENSE :
+#    -> Creative Commons Attribution 4.0 International
+#    -> github.com/ZarTek-Creole/TCL-ZCT/blob/main/LICENSE.txt
 #
 #
 #############################################################################
 namespace eval ::ZCT {
   namespace export *
-  variable PKG
-  array set PKG {
-    "version"               "0.0.9"
-    "name"                  "package ZCT"
-    "auteur"                "ZarTeK-Creole"
-    "url"                   "https://github.com/ZarTek-Creole"
+
+  variable packageData
+  variable isEggdrop
+  variable printProc
+
+  array set packageData {
+    "version"                   "0.0.9"
+    "name"                      "package ZCT"
+    "author"                    "ZarTeK-Creole"
+    "url"                       "https://github.com/ZarTek-Creole"
   }
-  if { [info commands ::putlog] == "" } {
-    set ::ZCT::eggdrop      0
-    set ::ZCT::PPL          "puts"
-  } else {
-    set ::ZCT::eggdrop 1
-    set ::ZCT::PPL "putlog"
+
+  try {
+    if { [info commands ::putlog] == "" } {
+      set isEggdrop             0
+      set printProc             "puts"
+    } else {
+      set isEggdrop             1
+      set printProc             "putlog"
+    }
+  } on error {errMsg} {
+    putlog "An error occurred: $errMsg"
+    return -code error $errMsg
   }
 }
+
 
 namespace eval ::ZCT::pkg {
 }
@@ -51,11 +62,11 @@ namespace eval ::ZCT::pkg {
 # @return Le status charger ou erreur
 proc ::ZCT::pkg::load { PKG_NAME {PKG_VERSION ""} {SCRIPT_NAME ""} {MISSING_MODE "die"} } {
   if { ${SCRIPT_NAME} == "" }  {
-    set ERR_PREFIX "\[Erreur\] Le script nécessite du package '${PKG_NAME}'"
-    set OK_PREFIX "\[OK\] Le script à chargé le package '${PKG_NAME}'"
+    set ERR_PREFIX              "\[Erreur\] Le script nécessite du package '${PKG_NAME}'"
+    set OK_PREFIX               "\[OK\] Le script à chargé le package '${PKG_NAME}'"
   } else {
-    set ERR_PREFIX "\[Erreur\] Le script '${SCRIPT_NAME}' nécessite du package '${PKG_NAME}'"
-    set OK_PREFIX "\[OK\] Le script '${SCRIPT_NAME}' à chargé le package '${PKG_NAME}'"
+    set ERR_PREFIX              "\[Erreur\] Le script '${SCRIPT_NAME}' nécessite du package '${PKG_NAME}'"
+    set OK_PREFIX               "\[OK\] Le script '${SCRIPT_NAME}' à chargé le package '${PKG_NAME}'"
   }
   if { ${PKG_VERSION} == "" } {
     if { [catch { set PKG_VERSION [package require ${PKG_NAME}]}] } {
@@ -66,24 +77,34 @@ proc ::ZCT::pkg::load { PKG_NAME {PKG_VERSION ""} {SCRIPT_NAME ""} {MISSING_MODE
       ${MISSING_MODE} "${ERR_PREFIX} version ${PKG_VERSION} ou supérieur pour fonctionner. [::ZCT::pkg::How_Download ${PKG_NAME}]"
     }
   }
-  ${::ZCT::PPL} "${OK_PREFIX} avec la version ${PKG_VERSION} avec succès"
+  ${::ZCT::printProc} "${OK_PREFIX} avec la version ${PKG_VERSION} avec succès"
 }
-# Si un package est absent lors du "pkg load" nous retournons une aide pour l'installer le package manquant
-proc ::ZCT::pkg::How_Download { PKG_NAME } {
-  switch -nocase ${PKG_NAME} {
-    Logger      	{ return "Il fait partie de la game de tcllib.\n Téléchargement sur https://www.tcl.tk/software/tcllib/" }
-    IRCServices  	{ return "Télécharger la derniere version sur https://github.com/ZarTek-Creole/TCL-PKG-IRCServices" }
-    Tcl         	{ return "Télécharger la derniere version sur https://www.tcl.tk/software/tcltk/" }
-    default     	{ return "Aucune information sur ${PKG_NAME}, vous devez chercher sur internet"   }
+
+
+# La fonction est refactorisée pour améliorer la lisibilité, et utilise des constantes pour les valeurs qui ne changent pas
+proc ::ZCT::pkg::howDownload { pkgName } {
+  variable tclLibURL            "https://www.tcl.tk/software/tcllib/"
+  variable ircServicesURL       "https://github.com/ZarTek-Creole/TCL-PKG-IRCServices"
+  variable tclURL               "https://www.tcl.tk/software/tcltk/"
+  variable noInfoMsg            "Aucune information sur %s, vous devez chercher sur internet"
+  variable tcllibMsg            "Il fait partie de la gamme de tcllib.\n Téléchargement sur %s"
+  variable downloadMsg          "Télécharger la dernière version sur %s"
+  switch -nocase $pkgName {
+    "Logger"                    { return [format $tcllibMsg $tclLibURL] }
+    "IRCServices"               { return [format $downloadMsg $ircServicesURL] }
+    "Tcl"                       { return [format $downloadMsg $tclURL] }
+    default                     { return [format $noInfoMsg $pkgName] }
   }
 }
+
+
 # Verifications de presence de variables.
 # Utile pour verifié que tout les variables ont bien été donné dans une fichier de configuration
 # dans
-# set VARS_LIST				[list "list1" "list2"];  #definitié les nom des arrayx
+# set VARS_LIST        [list "list1" "list2"];  #definitié les nom des arrayx
 #  Le code verifie a partir de la les listes defini graces a
-# set VARS_list1			[list "var1" "var2"]
-# set VARS_list2			[list "var3" "var4"]
+# set VARS_list1      [list "var1" "var2"]
+# set VARS_list2      [list "var3" "var4"]
 # Il verifiera la presence de ${list1(var1)}, ${list1(var2)}, ${list2(var3)} et ${list2(var4)}
 #
 # @param NAMESPACE Le nom de l'espace nom dans le quel rechercher
@@ -129,40 +150,56 @@ proc ::ZCT::pcolors_end { } {
   return \033\[\;0m
 }
 # procedure qui retourne où il est appellé
-proc ::ZCT::calledby {} {
-  set level [expr [info leve] - 2]
-  if { ${level} > 0 } {
-    return [lindex [info level ${level} ] 0]
-  } else {
-    if { [string length [info script] ] > 0 } {
-      return [info script]
+# @param level le niveau de profondeur
+
+proc ::ZCT::getCaller {level} {
+  try {
+    if {$level > 0} {
+      return -code ok [lindex [info level $level] 0]
     } else {
-      return [info nameofexecutable]
+      set scriptName [info script]
+      if {[string length $scriptName] > 0} {
+        return -code ok $scriptName
+      } else {
+        return -code ok [info nameofexecutable]
+      }
     }
+  } on error {errorMessage} {
+    putlog "Error occurred in getCaller: $errorMessage"
+    return -code error
   }
 }
+
+# Function to fetch the calling entity's name.
+# @return the name of the calling entity
+
+proc ::ZCT::calledBy {} {
+  set callLevel [expr {[info level] - 2}]
+  return -code ok [::ZCT::getCaller $callLevel]
+}
+
 # Putlog amelioreé, avec des niveau (couleurs differentes) et type de text
-if { ${::ZCT::eggdrop} } {
+if { ${::ZCT::isEggdrop} } {
   proc ::ZCT::putlog { text {level_name ""} {text_name ""} } {
     variable ::ZCT::SCRIPT
-    set UP_LEVEL_NAME [::ZCT::calledby]
+    set UP_LEVEL_NAME           [::ZCT::calledby]
     if { ${text_name} == "" } {
       if { ${level_name} != "" } {
-        set text_name " - ${level_name}"
+        set text_name           " - ${level_name}"
       } else {
-        set text_name ""
+        set text_name           ""
       }
     } else {
-      set text_name " - ${text_name}"
+      set text_name             " - ${text_name}"
     }
     switch -nocase ${level_name} {
-      "error"		{ puts "[pcolor_red]\[${UP_LEVEL_NAME}${text_name}\][pcolors_end] [pcolor_blue]${text}[pcolors_end]" }
-      "warning"	{ puts "[pcolor_yellow]\[${UP_LEVEL_NAME}${text_name}\][pcolors_end] [pcolor_blue]${text}[pcolors_end]" }
-      "notice"	{ puts "[pcolor_cyan]\[${UP_LEVEL_NAME}${text_name}\][pcolors_end] [pcolor_blue]${text}[pcolors_end]" }
-      "debug"		{ puts "[pcolor_magenta]\[${UP_LEVEL_NAME}${text_name}\][pcolors_end] [pcolor_blue]${text}[pcolors_end]" }
-      "info"		{ puts "[pcolor_blue]\[${UP_LEVEL_NAME}${text_name}\][pcolors_end] [pcolor_blue]${text}[pcolors_end]" }
-      "success"	{ puts "[pcolor_green]\[${UP_LEVEL_NAME}${text_name}\][pcolors_end] [pcolor_blue]${text}[pcolors_end]" }
-      default		{ puts "\[${UP_LEVEL_NAME}${text_name}\] [pcolor_blue]${text}[pcolors_end]" }
+      "error"                   { puts "[pcolor_red]\[${UP_LEVEL_NAME}${text_name}\][pcolors_end] [pcolor_blue]${text}[pcolors_end]" }
+      "warning"                 { puts "[pcolor_yellow]\[${UP_LEVEL_NAME}${text_name}\][pcolors_end] [pcolor_blue]${text}[pcolors_end]" }
+      "notice"                  { puts "[pcolor_cyan]\[${UP_LEVEL_NAME}${text_name}\][pcolors_end] [pcolor_blue]${text}[pcolors_end]" }
+      "debug"                   { puts "[pcolor_magenta]\[${UP_LEVEL_NAME}${text_name}\][pcolors_end] [pcolor_blue]${text}[pcolors_end]" }
+      "info"                    { puts "[pcolor_blue]\[${UP_LEVEL_NAME}${text_name}\][pcolors_end] [pcolor_blue]${text}[pcolors_end]" }
+      "success"                 { puts "[pcolor_green]\[${UP_LEVEL_NAME}${text_name}\][pcolors_end] [pcolor_blue]${text}[pcolors_end]" }
+      default                   { puts "\[${UP_LEVEL_NAME}${text_name}\] [pcolor_blue]${text}[pcolors_end]" }
     }
   }
   if { [info commands ::putlog.old] == "" } {
@@ -183,10 +220,10 @@ proc ::ZCT::create_sub_procs { namespace } {
       # tout ce qui fais partie ici, sera exécuté lors de l'exécution de la proc créer
       # les variables, commandes
       # le  proc_path contient chemin de la proc (lors de sont exécution et non maintenant donc)
-      set proc_path [lindex [info level 0] 0]
+      set proc_path            [lindex [info level 0] 0]
       # Si la proc est appeler sans subcommand, nous signalons qu'elle nécessite une
       if { ${subcommand} == "" } {
-        return  -code error \
+        return  -code error     \
           "wrong # args: should be \"${proc_path} subcommand ?arg ...?\""
       }
       # Si la subcommand n'existe pas dans les procs enfants, ont prévois de retourner la liste des procs existante dans le namespace courant (celle de la proc appelé )
@@ -208,7 +245,7 @@ proc ::ZCT::create_sub_procs { namespace } {
 namespace eval ::ZCT::TXT {
   namespace export *
 }
-namespace eval ::ZCT::TXT::visuals {
+namespace eval ::ZCT::Txt::Visuals {
   namespace export *
 }
 # Supprimer les accents dans une chaîne de caractères
@@ -217,8 +254,9 @@ namespace eval ::ZCT::TXT::visuals {
 #
 # @param TEXT Le TEXT dont les accents doivent être enlever
 # @return Le TEXT sans accents, ni cédiles
-proc ::ZCT::TXT::remove_accents { TEXT } {
-  return [::tcl::string::map -nocase {
+# Remove accents from a string
+proc ::ZCT::TXT::removeAccents {text} {
+  variable AccentsMap           {
     "à" "a" "â" "a" "ä" "a" "ã" "a" "å" "a" "á" "a" "à" "a" "å" "a"
     "é" "e" "è" "e" "ê" "e" "ë" "e"
     "î" "i" "ï" "i" "î" "i" "í" "i" "ì" "i"
@@ -226,7 +264,20 @@ proc ::ZCT::TXT::remove_accents { TEXT } {
     "ù" "u" "û" "u" "ü" "u" "ú" "u"
     "ý" "y" "ÿ" "y"
     "ç" "c" "ð" "d" "ñ" "n" "š" "s" "ž" "z"
-  } ${TEXT}]
+  }
+  set sanitizedText             $text
+  try {
+    set sanitizedText           [::tcl::string::map -nocase $AccentsMap $sanitizedText]
+    return -code return $sanitizedText
+  } on error {errorMessage} {
+    putlog "Error while removing accents: $errorMessage"
+    return -code error $errorMessage
+  }
+}
+
+# Utility function to get a padded number
+proc ::ZCT::TXT::getNumberPadded {num} {
+  return [expr {$num != 00 ? [string trimleft $num 0] : 0}]
 }
 
 # Supprimer les accents dans une chaîne de caractères
@@ -236,43 +287,69 @@ proc ::ZCT::TXT::remove_accents { TEXT } {
 # @param TEXT Le TEXT contenant des variables de subtitutions
 # @param Channel Le salon pour remplacer %chan% (facultatif)
 # @return Le TEXT avec les doonées de subtitutions replacer
-proc ::ZCT::TXT::REPLACE_SUBSTITUTE { TEXT {Channel ""} } {
-  regsub -all %chan%			${TEXT} ${Channel} TEXT;
-  regsub -all %botnick%		${TEXT} [regsub -all {\W} ${::ClaraServ::config(service_nick)} {\\&}] TEXT;
-  regsub -all %hour%			${TEXT} [set hour [strftime %H [unixtime]]] TEXT;
-  regsub -all %hour_short%	${TEXT} [if { ${hour} != 00 } { set dummy [string trimleft ${hour} 0] } { set dummy 0 }] TEXT;
-  regsub -all %minutes%		${TEXT} [set minutes [strftime %M [unixtime]]] TEXT;
-  regsub -all %minutes_short%	${TEXT} [if { ${minutes} != 00 } { set dummy [string trimleft ${minutes} 0] } { set dummy 0 }] TEXT;
-  regsub -all %seconds%		${TEXT} [set seconds [strftime %S [unixtime]]] TEXT;
-  regsub -all %seconds_short%	${TEXT} [if { ${seconds} != 00 } { set dummy [string trimleft ${seconds} 0] } { set dummy 0 }] TEXT;
-  regsub -all %day_num%		${TEXT} [strftime %d [unixtime]] TEXT;
-  regsub -all %day%			${TEXT} [string map -nocase {Mon lundi Tue mardi Wed mercredi Thu jeudi Fri vendredi Sat samedi Sun dimanche} [strftime "%a" [unixtime]]] TEXT;
-  regsub -all %month_num%		${TEXT} [strftime %m [unixtime]] TEXT;
-  regsub -all %month%			${TEXT} [string map {Jan janvier Feb février Mar mars Apr avril May mai Jun juin Jul juillet Aou août Sep septembre Oct octobre Nov novembre Dec décembre} [strftime %b [unixtime]]] TEXT;
-  regsub -all %year%			${TEXT} [strftime %Y [unixtime]] TEXT;
-  return ${TEXT}
-}
 
-# Centrer un TEXT avec des espaces sur une longueur donnée
+# Main function to replace substitutions in a text
+proc ::ZCT::TXT::REPLACE_SUBSTITUTE { TEXT {Channel ""} } {
+  try {
+    set timeNow                 [unixtime]
+    set botNick                 [string map -nocase {\W {\\&}} $::ClaraServ::config(service_nick)]
+    set hours                   [strftime %H $timeNow]
+    set minutes                 [strftime %M $timeNow]
+    set seconds                 [strftime %S $timeNow]
+    set day                     [string map -nocase {Mon lundi Tue mardi Wed mercredi Thu jeudi Fri vendredi Sat samedi Sun dimanche} [strftime "%a" $timeNow]]
+    set month                   [string map {Jan janvier Feb février Mar mars Apr avril May mai Jun juin Jul juillet Aou août Sep septembre Oct octobre Nov novembre Dec décembre} [strftime %b $timeNow]]
+    set year                    [strftime %Y $timeNow]
+
+    dict with TEXT {
+      regsub -all %chan% $TEXT $Channel TEXT
+      regsub -all %botnick% $TEXT $botNick TEXT
+      regsub -all %hour% $TEXT $hours TEXT
+      regsub -all %hour_short% $TEXT [::ZCT::TXT::getNumberPadded $hours] TEXT
+      regsub -all %minutes% $TEXT $minutes TEXT
+      regsub -all %minutes_short% $TEXT [::ZCT::TXT::getNumberPadded $minutes] TEXT
+      regsub -all %seconds% $TEXT $seconds TEXT
+      regsub -all %seconds_short% $TEXT [::ZCT::TXT::getNumberPadded $seconds] TEXT
+      regsub -all %day_num% $TEXT [strftime %d $timeNow] TEXT
+      regsub -all %day% $TEXT $day TEXT
+      regsub -all %month_num% $TEXT [strftime %m $timeNow] TEXT
+      regsub -all %month% $TEXT $month TEXT
+      regsub -all %year% $TEXT $year TEXT
+    }
+
+    return -code ok $TEXT
+  } on error {msg options} {
+    putlog "Exception: $msg"
+    dict with options -errorinfo
+    return -code error $msg
+  }
+}
+# Center a TEXT with spaces on a given length
 #
-# @param TEXT Le TEXT qui doit être centré
-# @param LENGTH La longueur voulu avec les espacements
-# @return Le TEXT centré avec le nombre d'espaces pour avoir une longueur égal à LENGTH
-proc ::ZCT::TXT::visuals::espace { TEXT LENGTH } {
-  set text			[string trim ${TEXT}]
-  set text_length		[string length ${TEXT}];
-  set espace_length	[expr (${LENGTH} - ${text_length})/2.0]
-  set ESPACE_TMP		[split ${espace_length} .]
-  set ESPACE_ENTIER	[lindex ${ESPACE_TMP} 0]
-  set ESPACE_DECIMAL	[lindex ${ESPACE_TMP} 1]
-  if { ${ESPACE_DECIMAL} == 0 } {
-    set espace_one			[string repeat " " ${ESPACE_ENTIER}];
-    set espace_two			[string repeat " " ${ESPACE_ENTIER}];
-    return "${espace_one}${TEXT}${espace_two}"
-  } else {
-    set espace_one			[string repeat " " ${ESPACE_ENTIER}];
-    set espace_two			[string repeat " " [expr (${ESPACE_ENTIER}+1)]];
-    return "${espace_one}${TEXT}${espace_two}"
+# @param TEXT The TEXT that needs to be centered
+# @param LENGTH The desired length with spacings
+# @return The centered TEXT with the number of spaces to have a length equal to LENGTH
+proc ::ZCT::Txt::Visuals::centerWithSpaces { text length } {
+  try {
+    set trimmedText             [string trim ${text}]
+    set textLength              [string length ${trimmedText}]
+    set spaceLength             [expr {(${length} - ${textLength}) / 2.0}]
+    set spaceLengthComponents   [split ${spaceLength} .]
+
+    set spaceLengthInteger      [lindex ${spaceLengthComponents} 0]
+    set spaceLengthDecimal      [lindex ${spaceLengthComponents} 1]
+
+    set spacePrefix             [string repeat " " ${spaceLengthInteger}]
+    set spaceSuffix             [string repeat " " ${spaceLengthInteger}]
+
+    if { ${spaceLengthDecimal} == 0 } {
+      return -code return "${spacePrefix}${trimmedText}${spaceSuffix}"
+    } else {
+      set spaceSuffix [string repeat " " [expr {${spaceLengthInteger} + 1}]]
+      return -code return "${spacePrefix}${trimmedText}${spaceSuffix}"
+    }
+  } on error {errMsg} {
+    putlog "Error occurred: $errMsg"
+    return -code error $errMsg
   }
 }
 
@@ -280,12 +357,33 @@ proc ::ZCT::TXT::visuals::espace { TEXT LENGTH } {
 #
 # @param TEXT Le TEXT avec des codes style
 # @return Le TEXT sans les codes styles
-proc ::ZCT::TXT::visuals::remove { TEXT } {
-  regsub -all -nocase {<c([0-9]{0,2}(,[0-9]{0,2})?)?>|</c([0-9]{0,2}(,[0-9]{0,2})?)?>} ${TEXT} {} TEXT;
-  regsub -all -nocase {<b>|</b>} ${TEXT} {} TEXT;
-  regsub -all -nocase {<u>|</u>} ${TEXT} {} TEXT;
-  regsub -all -nocase {<i>|</i>} ${TEXT} {} TEXT;
-  return [regsub -all -nocase {<s>} ${TEXT} {}];
+proc ::ZCT::Txt::Visuals::removeVisualStyles { text } {
+  set stylePatterns             [list
+  {<c([0-9]{0,2}(,[0-9]{0,2})?)?>|</c([0-9]{0,2}(,[0-9]{0,2})?)?>}
+  {<b>|</b>}
+  {<u>|</u>}
+  {<i>|</i>}
+  {<s>|</s>}
+  ]
+  try {
+    foreach pattern $stylePatterns {
+      set text                  [::ZCT::Txt::Visuals::removeStyle $text $pattern]
+    }
+    return -code ok $text
+  } on error {errorMessage options} {
+    putlog "Error in removeVisualStyles: $errorMessage"
+    return -code error $errorMessage
+  }
+}
+
+# Utilise une autre procédure pour enlever un style spécifique
+proc ::ZCT::Txt::Visuals::removeStyle { text pattern } {
+  try {
+    return -code ok [regsub -all -nocase $pattern $text {}]
+  } on error {errorMessage options} {
+    putlog "Error in removeStyle: $errorMessage"
+    return -code error $errorMessage
+  }
 }
 
 ##############################################################################
@@ -318,17 +416,35 @@ proc ::ZCT::TXT::visuals::remove { TEXT } {
 # Gris foncé  /  Dark Grey   = 14
 # Gris clair  /  Light Grey  = 15
 ##
-# @param TEXT Le TEXT avec des codes style a remplacer avec de vrai codes styles (couleurs, gras..)
-# @return Le TEXT avec les codes styles en TCl
-proc ::ZCT::TXT::visuals::apply { TEXT } {
-  regsub -all -nocase {<c([0-9]{0,2}(,[0-9]{0,2})?)?>|</c([0-9]{0,2}(,[0-9]{0,2})?)?>} ${TEXT} "\003\\1" TEXT;
-  regsub -all -nocase {<b>|</b>} ${TEXT} "\002" TEXT;
-  regsub -all -nocase {<u>|</u>} ${TEXT} "\037" TEXT;
-  regsub -all -nocase {<i>|</i>} ${TEXT} "\026" TEXT;
-  return [regsub -all -nocase {<s>} ${TEXT} "\017"];
+# @param textToProcess Text with style codes to replace with actual style codes (colors, bold..)
+# @return Processed text with TCL style codes
+proc ::ZCT::Txt::Visuals::apply { textToProcess } {
+  variable tagPattern {
+    "c"                         "<c([0-9]{0,2}(,[0-9]{0,2})?)?>|</c([0-9]{0,2}(,[0-9]{0,2})?)?>"
+    "b"                         "<b>|</b>"
+    "u"                         "<u>|</u>"
+    "i"                         "<i>|</i>"
+    "s"                         "<s>"
+  }
+
+  variable tagReplacement {
+    "c"                         "\003\\1"
+    "b"                         "\002"
+    "u"                         "\037"
+    "i"                         "\026"
+    "s"                         "\017"
+  }
+
+  foreach {tag pat} [array get tagPattern] {
+    set rep                     [dict get $tagReplacement $tag]
+    regsub -all -nocase $pat $textToProcess $rep textToProcess
+  }
+
+  return -code return $textToProcess
 }
+
 
 ::ZCT::create_sub_procs ::ZCT
 
-package provide ZCT ${::ZCT::PKG(version)}
-${::ZCT::PPL} "Le paquet ZCT version ${::ZCT::PKG(version)} par ${::ZCT::PKG(auteur)} a été chargé. Vous pouvez le trouver à l'adresse suivante : ${::ZCT::PKG(url)}."
+package provide ZCT ${::ZCT::packageData(version)}
+${::ZCT::printProc} "Le paquet ZCT version ${::ZCT::packageData(version)} par ${::ZCT::packageData(author)} a été chargé. Vous pouvez le trouver à l'adresse suivante : ${::ZCT::packageData(url)}."

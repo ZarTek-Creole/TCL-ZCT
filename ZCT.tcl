@@ -27,6 +27,7 @@ namespace eval ::ZCT {
   variable packageData
   variable isEggdrop
   variable printProc
+  variable exitOnError          1
 
   array set packageData {
     "version"                   "0.0.9"
@@ -44,7 +45,7 @@ namespace eval ::ZCT {
       set printProc             "putlog"
     }
   } on error {errMsg} {
-    putlog "An error occurred: $errMsg"
+    puts "An error occurred: $errMsg"
     return -code error $errMsg
   }
 }
@@ -118,7 +119,7 @@ proc ::ZCT::Is:ArrayList:Exists { NAMESPACE } {
         [format "%s > La liste des ArrayLists a verifier '%s' est inexistant." ${::TMP_NS_ArrayList} "VARS_LIST"]
     }
     foreach LIST_NAME ${VARS_LIST} {
-      puts [format "%s > Verification de la présence des variables : \$%s\(..)" ${::TMP_NS_ArrayList} ${LIST_NAME}]
+      ${::ZCT::printProc} [format "%s > Verification de la présence des variables : \$%s\(..)" ${::TMP_NS_ArrayList} ${LIST_NAME}]
       variable VARS_${LIST_NAME}
       if { ![info exists VARS_${LIST_NAME}] } {
         return -code error \
@@ -165,11 +166,25 @@ proc ::ZCT::getCaller {level} {
       }
     }
   } on error {errorMessage} {
-    putlog "Error occurred in getCaller: $errorMessage"
+    ${::ZCT::printProc} "Error occurred in getCaller: $errorMessage"
     return -code error
   }
 }
 
+proc ::ZCT::getError {args} {
+  global errorInfo tcl_patchLevel tcl_platform
+  variable exitOnError
+  ${::ZCT::printProc} "--\[[::ZCT::pcolor_red]Error Info[::ZCT::pcolors_end]]------------------------------------------"
+  ${::ZCT::printProc} "Tcl: $tcl_patchLevel"
+  ${::ZCT::printProc} "Box: $tcl_platform(os) $tcl_platform(osVersion)"
+  ${::ZCT::printProc} "Called by: [::ZCT::calledBy]"
+  ${::ZCT::printProc} "--\[[::ZCT::pcolor_red]Error Message[::ZCT::pcolors_end]]--"
+  foreach line [split $errorInfo "\n"] {${::ZCT::printProc} $line}
+  ${::ZCT::printProc} "--------------------------------------------------------"
+  if {$exitOnError} {
+    exit 1  ;# exit with error
+  }
+}
 # Function to fetch the calling entity's name.
 # @return the name of the calling entity
 
@@ -193,13 +208,13 @@ if { ${::ZCT::isEggdrop} } {
       set text_name             " - ${text_name}"
     }
     switch -nocase ${level_name} {
-      "error"                   { puts "[pcolor_red]\[${UP_LEVEL_NAME}${text_name}\][pcolors_end] [pcolor_blue]${text}[pcolors_end]" }
-      "warning"                 { puts "[pcolor_yellow]\[${UP_LEVEL_NAME}${text_name}\][pcolors_end] [pcolor_blue]${text}[pcolors_end]" }
-      "notice"                  { puts "[pcolor_cyan]\[${UP_LEVEL_NAME}${text_name}\][pcolors_end] [pcolor_blue]${text}[pcolors_end]" }
-      "debug"                   { puts "[pcolor_magenta]\[${UP_LEVEL_NAME}${text_name}\][pcolors_end] [pcolor_blue]${text}[pcolors_end]" }
-      "info"                    { puts "[pcolor_blue]\[${UP_LEVEL_NAME}${text_name}\][pcolors_end] [pcolor_blue]${text}[pcolors_end]" }
-      "success"                 { puts "[pcolor_green]\[${UP_LEVEL_NAME}${text_name}\][pcolors_end] [pcolor_blue]${text}[pcolors_end]" }
-      default                   { puts "\[${UP_LEVEL_NAME}${text_name}\] [pcolor_blue]${text}[pcolors_end]" }
+      "error"                   { ${::ZCT::printProc} "[pcolor_red]\[${UP_LEVEL_NAME}${text_name}\][pcolors_end] [pcolor_blue]${text}[pcolors_end]" }
+      "warning"                 { ${::ZCT::printProc} "[pcolor_yellow]\[${UP_LEVEL_NAME}${text_name}\][pcolors_end] [pcolor_blue]${text}[pcolors_end]" }
+      "notice"                  { ${::ZCT::printProc} "[pcolor_cyan]\[${UP_LEVEL_NAME}${text_name}\][pcolors_end] [pcolor_blue]${text}[pcolors_end]" }
+      "debug"                   { ${::ZCT::printProc} "[pcolor_magenta]\[${UP_LEVEL_NAME}${text_name}\][pcolors_end] [pcolor_blue]${text}[pcolors_end]" }
+      "info"                    { ${::ZCT::printProc} "[pcolor_blue]\[${UP_LEVEL_NAME}${text_name}\][pcolors_end] [pcolor_blue]${text}[pcolors_end]" }
+      "success"                 { ${::ZCT::printProc} "[pcolor_green]\[${UP_LEVEL_NAME}${text_name}\][pcolors_end] [pcolor_blue]${text}[pcolors_end]" }
+      default                   { ${::ZCT::printProc} "\[${UP_LEVEL_NAME}${text_name}\] [pcolor_blue]${text}[pcolors_end]" }
     }
   }
   if { [info commands ::putlog.old] == "" } {
@@ -270,7 +285,7 @@ proc ::ZCT::TXT::removeAccents {text} {
     set sanitizedText           [::tcl::string::map -nocase $AccentsMap $sanitizedText]
     return -code return $sanitizedText
   } on error {errorMessage} {
-    putlog "Error while removing accents: $errorMessage"
+    ${::ZCT::printProc} "Error while removing accents: $errorMessage"
     return -code error $errorMessage
   }
 }
@@ -318,7 +333,7 @@ proc ::ZCT::TXT::REPLACE_SUBSTITUTE { TEXT {Channel ""} } {
 
     return -code ok $TEXT
   } on error {msg options} {
-    putlog "Exception: $msg"
+    ${::ZCT::printProc} "Exception: $msg"
     dict with options -errorinfo
     return -code error $msg
   }
@@ -348,7 +363,7 @@ proc ::ZCT::Txt::Visuals::centerWithSpaces { text length } {
       return -code return "${spacePrefix}${trimmedText}${spaceSuffix}"
     }
   } on error {errMsg} {
-    putlog "Error occurred: $errMsg"
+    ${::ZCT::printProc} "Error occurred: $errMsg"
     return -code error $errMsg
   }
 }
@@ -371,7 +386,7 @@ proc ::ZCT::Txt::Visuals::removeVisualStyles { text } {
     }
     return -code ok $text
   } on error {errorMessage options} {
-    putlog "Error in removeVisualStyles: $errorMessage"
+    ${::ZCT::printProc} "Error in removeVisualStyles: $errorMessage"
     return -code error $errorMessage
   }
 }
@@ -381,7 +396,7 @@ proc ::ZCT::Txt::Visuals::removeStyle { text pattern } {
   try {
     return -code ok [regsub -all -nocase $pattern $text {}]
   } on error {errorMessage options} {
-    putlog "Error in removeStyle: $errorMessage"
+    ${::ZCT::printProc} "Error in removeStyle: $errorMessage"
     return -code error $errorMessage
   }
 }
